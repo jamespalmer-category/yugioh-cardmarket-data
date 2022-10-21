@@ -32,6 +32,12 @@ class TCG_set:
 
         #getting the name of each table column - get the number of headers
         col_name = []
+
+        #Solving an issue caused by the giant cards in Duel Overload.
+        if url == "https://yugipedia.com/wiki/Duel_Overload":
+            card_info_headers = card_info_headers[1:]
+        
+        
         headers = card_info_headers[0].find_all('th')
 
         #split table data into the four/five categories from the title above
@@ -157,6 +163,10 @@ class TCG_set:
             re_set_name = 'Lost-Art-Promos'
         elif self.set_code == 'MP20':
             re_set_name = re_set_name + '-Mega-Pack'
+        elif self.set_code in ['YA0' + str(i) for i in range(1,8)]:
+            re_set_name = 'ARCV-Manga-Promos'
+        elif self.set_code =='SBSC' or self.set_code =='SBAD':
+            re_set_name = re_set_name[11:]
         #Getting cardmarket index
         
         cardmarket_set_content = csm.cardmarket_df(re_set_name)
@@ -173,10 +183,16 @@ class TCG_set:
         df = self.cardmarket_set_content
         
         #Make the directory for the set price data if it doesn't exist
-        if not os.path.exists('Cardmarket data\{}'.format(self.set_code)):
-            os.makedirs('Cardmarket data\{}'.format(self.set_code))
+        if self.set_code not in ['YA0' + str(i) for i in range(1,8)]:
+            if not os.path.exists('Cardmarket data\{}'.format(self.set_code)):
+                os.makedirs('Cardmarket data\{}'.format(self.set_code))
+            else:
+                print("Already have Cardmarket data\{}".format(self.set_code))
         else:
-            print("Already have Cardmarket data\{}".format(self.set_code))
+            if not os.path.exists('Cardmarket data\{}'.format(self.set_code[0:2] + 'XX')):
+                 os.makedirs('Cardmarket data\{}'.format(self.set_code[0:2] + 'XX'))
+            else:
+                print("Already have Cardmarket data\{}".format(self.set_code[0:2] + 'XX'))
         
         latest_date = []
         latest_price = []
@@ -223,9 +239,11 @@ class TCG_set:
                 df_prices = pd.DataFrame({'Date': chart_data_dates, 'Price (Euros)': chart_data_price})
             
                 #take the price data and puts it in a CSV
-            
-                df_prices.to_csv('Cardmarket data\{}\{} {} price.csv'.format(self.set_code, self.set_code + '-' + df['Card Number'][j], list(df['Card Name'])[j]))
-            
+
+                if '-' not in self.cardmarket_set_content['Card Number'].iloc[j]:
+                    df_prices.to_csv('Cardmarket data\{}\{} {} price.csv'.format(self.set_code, self.set_code + '-' + df['Card Number'][j], list(df['Card Name'])[j]))
+                else:
+                    df_prices.to_csv('Cardmarket data\{}\{} {} price.csv'.format(self.set_code[0:2] + 'XX', self.set_code[0:2] + self.cardmarket_set_content['Card Number'].iloc[j], list(df['Card Name'])[j]))
             else:
                 print('No chart data for {} {}'.format(self.set_code + '-' + df['Card Number'][j], list(df['Card Name'])[j]))
                 
@@ -284,7 +302,10 @@ class TCG_set:
                     df_current_prices = df_current_prices.drop_duplicates(ignore_index = True)
                     #self.updated_prices = df_current_prices
                 
-                    df_current_prices.to_csv('Cardmarket data\{}\{} {} price.csv'.format(self.set_code, self.set_code + '-' + df['Card Number'][j], list(df['Card Name'])[j])) 
+                    if '-' not in self.cardmarket_set_content['Card Number'].iloc[j]:
+                        df_prices.to_csv('Cardmarket data\{}\{} {} price.csv'.format(self.set_code, self.set_code + '-' + df['Card Number'][j], list(df['Card Name'])[j]))
+                    else:
+                        df_prices.to_csv('Cardmarket data\{}\{} {} price.csv'.format(self.set_code[0:2] + 'XX', self.set_code[0:2] + self.cardmarket_set_content['Card Number'].iloc[j], list(df['Card Name'])[j]))
                 else:
                     print('No chart data for {} {}'.format(self.set_code + '-' + df['Card Number'][j], list(df['Card Name'])[j]))
             
@@ -327,8 +348,10 @@ class TCG_set:
                     df_prices = pd.DataFrame({'Date': chart_data_dates, 'Price (Euros)': chart_data_price})
                 
                     #take the price data and puts it in a CSV
-                
-                    df_prices.to_csv('Cardmarket data\{}\{} {} price.csv'.format(self.set_code, self.set_code + '-' + df['Card Number'][j], list(df['Card Name'])[j]))
+                    if '-' not in self.cardmarket_set_content['Card Number'].iloc[j]:
+                        df_prices.to_csv('Cardmarket data\{}\{} {} price.csv'.format(self.set_code, self.set_code + '-' + df['Card Number'][j], list(df['Card Name'])[j]))
+                    else:
+                        df_prices.to_csv('Cardmarket data\{}\{} {} price.csv'.format(self.set_code[0:2] + 'XX', self.set_code[0:2] + self.cardmarket_set_content['Card Number'].iloc[j], list(df['Card Name'])[j]))
                 
                 else:
                     print('No chart data for {} {}'.format(self.set_code + '-' + df['Card Number'][j], list(df['Card Name'])[j]))
